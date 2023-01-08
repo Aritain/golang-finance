@@ -1,0 +1,20 @@
+version: '2.4'
+
+services:
+  asset-tracker:
+    build: 
+      context: ./
+      dockerfile: ./Dockerfile
+    image: asset-tracker:latest
+    container_name: asset-tracker
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+    environment:
+        TG_TOKEN: ""
+        DB_PATH: "/watch-prod.db"
+    volumes:
+      - ./YOUR_DB.db:/watch-prod.db:rw
