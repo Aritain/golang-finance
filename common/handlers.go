@@ -1,7 +1,7 @@
 package common
 
 import (
-    "github.com/piquette/finance-go/quote"
+    //"github.com/piquette/finance-go/quote"
     "github.com/Syfaro/telegram-bot-api"
     "encoding/json"
     "errors"
@@ -10,6 +10,7 @@ import (
     "asset_tracker/types"
     "regexp"
     "strconv"
+    "os"
 )
 
 // Sort of const
@@ -17,10 +18,9 @@ func getCoinBaseUrl() []string {
 	return []string{"https://api.coinbase.com/v2/prices/", "-USD/spot"}
 }
 
-/* Old way of handling stock prices
 func getStockBaseUrl() []string {
-	return []string{"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=", "&apikey=demo"}
-}*/
+	return []string{"https://api.tiingo.com/iex/?tickers=", "&token="}
+}
 
 func isTicker(ticker string) bool {
     var isTicker = regexp.MustCompile(`^[A-Za-z0-9]+$`)
@@ -56,6 +56,7 @@ func FetchCryptoPrice(coinName string) (float64, error) {
     return coinPrice, nil
 }
 
+/* Yahoo broke everything again, library is not working
 func FetchStockPrice(stockName string) (float64, error) {
 
     stockPrice, err := quote.Get(stockName)
@@ -65,28 +66,32 @@ func FetchStockPrice(stockName string) (float64, error) {
     }
     return stockPrice.RegularMarketPrice, nil
 }
+*/
 
-/* Old way of handling stock prices
-func FetchStockPrice(shareName string) string {
+func FetchStockPrice(shareName string) (float64, error) {
+    var apiKey string = os.Getenv("TIINGO_API_TOKEN")
 	var shareBase []string = getStockBaseUrl()
-	var shareUrl string = shareBase[0] + shareName + shareBase[1]
+	var shareUrl string = shareBase[0] + shareName + shareBase[1] + apiKey
 
     res, err := http.Get(shareUrl)
     if err != nil {
-        return "Error while fetching the data"
+        return 0.0, errors.New("Failed to fetch asset price, please check asset name provided")
     }
     defer res.Body.Close()
 
-    body, err := ioutil.ReadAll(res.Body)
-	fetchedJson := types.Stocks{}
-	jsonError := json.Unmarshal(body, &fetchedJson)
-
-	if jsonError != nil || fetchedJson.GlobalQuote.Price == "" {
-		return "Failed to fetch stock price, please check stock name provided"
+    var tiingoResp types.TiingoResponse
+    decoder := json.NewDecoder(res.Body)
+    err = decoder.Decode(&tiingoResp)
+	if err != nil {
+		return 0.0, errors.New("Failed to fetch asset price, please check asset name provided")
 	}
 
-    return fetchedJson.GlobalQuote.Price
-} */
+	if len(tiingoResp) == 0 || tiingoResp[0].Price == 0.0 {
+		return 0.0, errors.New("Failed to fetch asset price, please check asset name provided")
+	}
+
+    return tiingoResp[0].Price, nil
+}
 
 func ValidateUniqAsset(userID int64, assetName string) bool {
     var userAssets []types.SavedAsset = GetAssets(userID)

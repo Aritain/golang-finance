@@ -24,6 +24,11 @@ type Stocks struct {
 	} `json:"Global Quote"`
 } */
 
+// TiingoResponse struct
+type TiingoResponse []struct {
+	Price float64 `json:"last"`
+}
+
 type SavedChat struct {
 	UserID int64
 	ChatPath string

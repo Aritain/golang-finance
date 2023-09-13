@@ -14,7 +14,7 @@ import (
 // 4. Implement panic?
 
 func ValidateEnvs() []string {
-	return []string{"TG_TOKEN", "DB_PATH"}
+	return []string{"TG_TOKEN", "DB_PATH", "TIINGO_API_TOKEN"}
 }
 
 func AssetWatcher (bot *tgbotapi.BotAPI) {
@@ -43,7 +43,7 @@ func AssetWatcher (bot *tgbotapi.BotAPI) {
 				bot.Send(msg)
 			}
 		}
-		time.Sleep(300 * time.Second)
+		time.Sleep(1 * time.Hour)
 	}
 }
 

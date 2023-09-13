@@ -16,5 +16,6 @@ services:
     environment:
         TG_TOKEN: ""
         DB_PATH: "/watch-prod.db"
+        TIINGO_API_TOKEN: ""
     volumes:
       - ./YOUR_DB.db:/watch-prod.db:rw
