@@ -1,9 +1,9 @@
 package common
 
 import (
-    "strconv"
-    "asset_tracker/types"
+	"asset_tracker/types"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -22,7 +22,7 @@ func EndChat(userChats *[]types.SavedChat, userID int64) {
 			// Magically remove element from the list
 			*userChats = append((*userChats)[:index], (*userChats)[index+1:]...)
 		}
-	}	
+	}
 }
 
 func DeleteWatchCache(savedAssets *[]types.SavedAsset, userID int64) {
@@ -31,7 +31,7 @@ func DeleteWatchCache(savedAssets *[]types.SavedAsset, userID int64) {
 			// Magically remove element from the list
 			*savedAssets = append((*savedAssets)[:index], (*savedAssets)[index+1:]...)
 		}
-	}	
+	}
 }
 
 func UpdateAssetNPrice(savedAssets *[]types.SavedAsset, userID int64, assetName string) (string, bool) {
@@ -41,7 +41,7 @@ func UpdateAssetNPrice(savedAssets *[]types.SavedAsset, userID int64, assetName 
 		DeleteWatchCache(savedAssets, userID)
 		return "Error in asset name provided, please try again", false
 	}
-	for index, elem := range  *savedAssets {
+	for index, elem := range *savedAssets {
 		if elem.UserID == userID {
 			if ValidateUniqAsset(userID, assetName) == false {
 				DeleteWatchCache(savedAssets, userID)
@@ -61,7 +61,7 @@ func UpdateAssetNPrice(savedAssets *[]types.SavedAsset, userID int64, assetName 
 
 		}
 	}
-	return "You chose "+assetName+" (current price is "+fmt.Sprintf("%.2f", assetPrice)+"). Please provide target price for the asset", true
+	return "You chose " + assetName + " (current price is " + fmt.Sprintf("%.2f", assetPrice) + "). Please provide target price for the asset", true
 }
 
 func AssetTrargetPrice(savedAssets *[]types.SavedAsset, userID int64, targetPrice string) string {
@@ -70,7 +70,7 @@ func AssetTrargetPrice(savedAssets *[]types.SavedAsset, userID int64, targetPric
 		DeleteWatchCache(savedAssets, userID)
 		return "Error in target price provided, please try again"
 	}
-	for index, elem := range  *savedAssets {
+	for index, elem := range *savedAssets {
 		if elem.UserID == userID {
 			(*savedAssets)[index].TargetPrice, err = strconv.ParseFloat(targetPrice, 64)
 			writeAsset := types.SavedAsset{
@@ -90,36 +90,34 @@ func AssetTrargetPrice(savedAssets *[]types.SavedAsset, userID int64, targetPric
 	return "Asset succesfully added!"
 }
 
-
 func CompileUserAssets(userAssets []types.SavedAsset) string {
-    var compiledAssets string
-    var fetchedPrice float64
-    if len(userAssets) == 0 {
-        compiledAssets = "Currently you are not tracking any assets"
-    } else {
-       compiledAssets =  "Your current tracked assets:\nName | Init Price | Target Price | Current Price\n\n"
-    }
+	var compiledAssets string
+	var fetchedPrice float64
+	if len(userAssets) == 0 {
+		compiledAssets = "Currently you are not tracking any assets"
+	} else {
+		compiledAssets = "Your current tracked assets:\nName | Init Price | Target Price | Current Price\n\n"
+	}
 	for _, elem := range userAssets {
-        fetchedPrice, _ = FetchStockPrice(elem.AssetName)
-    	compiledAssets = compiledAssets + strings.ToUpper(elem.AssetName) +
-    	" | " + fmt.Sprint(elem.InitPrice) +
-    	" | " + fmt.Sprint(elem.TargetPrice) + 
-        " | " + fmt.Sprintf("%.2f", fetchedPrice) + "\n"
-    }
-    return compiledAssets
+		fetchedPrice, _ = FetchStockPrice(elem.AssetName)
+		compiledAssets = compiledAssets + strings.ToUpper(elem.AssetName) +
+			" | " + fmt.Sprint(elem.InitPrice) +
+			" | " + fmt.Sprint(elem.TargetPrice) +
+			" | " + fmt.Sprintf("%.2f", fetchedPrice) + "\n"
+	}
+	return compiledAssets
 }
 
-
 func ConvertPrice(assetType string, assetName string) string {
-    var err error
-    var assetPrice float64
-    if assetType == "crypto" {
-        assetPrice, err = FetchCryptoPrice(assetName)
-    } else if assetType == "stock" {
-        assetPrice, err = FetchStockPrice(assetName)
-    }
-    if err != nil {
-        return err.Error()
-    }
-    return fmt.Sprintf("%.2f", assetPrice)
+	var err error
+	var assetPrice float64
+	if assetType == "crypto" {
+		assetPrice, err = FetchCryptoPrice(assetName)
+	} else if assetType == "stock" {
+		assetPrice, err = FetchStockPrice(assetName)
+	}
+	if err != nil {
+		return err.Error()
+	}
+	return fmt.Sprintf("%.2f", assetPrice)
 }

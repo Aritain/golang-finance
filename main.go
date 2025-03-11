@@ -1,12 +1,14 @@
 package main
+
 import (
-  "github.com/Syfaro/telegram-bot-api"
-  "log"
-  "fmt"
-  "time"
-  "asset_tracker/types"
-  "asset_tracker/common"
-  "os"
+	"asset_tracker/common"
+	"asset_tracker/types"
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	tgbotapi "github.com/Syfaro/telegram-bot-api"
 )
 
 // # TODO list
@@ -17,7 +19,7 @@ func ValidateEnvs() []string {
 	return []string{"TG_TOKEN", "DB_PATH", "TIINGO_API_TOKEN"}
 }
 
-func AssetWatcher (bot *tgbotapi.BotAPI) {
+func AssetWatcher(bot *tgbotapi.BotAPI) {
 	var currentPrice float64
 	var savedAssets []types.SavedAsset
 	var err error
@@ -32,11 +34,11 @@ func AssetWatcher (bot *tgbotapi.BotAPI) {
 				currentPrice, err = common.FetchCryptoPrice(elem.AssetName)
 			}
 			if err != nil {
-				log.Printf("Filed to fetch price for "+elem.AssetName)
+				log.Printf("Filed to fetch price for " + elem.AssetName)
 				continue
 			}
 			if (elem.InitPrice < elem.TargetPrice && elem.TargetPrice < currentPrice) ||
-				(elem.InitPrice > elem.TargetPrice && elem.TargetPrice > currentPrice)  {
+				(elem.InitPrice > elem.TargetPrice && elem.TargetPrice > currentPrice) {
 
 				common.DeleteDBRecord(elem.UserID, elem.AssetName)
 				msg := tgbotapi.NewMessage(elem.UserID, "Reached target price ("+fmt.Sprint(elem.TargetPrice)+") for "+elem.AssetName)
@@ -88,7 +90,7 @@ func main() {
 			Text := update.Message.Text
 
 			log.Printf("[%s] %d %s", UserName, ChatID, Text)
-			
+
 			usedKeyboard = common.CompileDefaultKeyboard()
 
 			if Text == "info" {
@@ -99,78 +101,78 @@ func main() {
 
 			// Straight up ignore any input longer than 30 symbols since atm there is so case when it might be needed
 			if ChatPath != "" && len(Text) < 30 {
-				
+
 				common.EndChat(&userChats, ChatID)
 				switch {
-					case ChatPath == "/crypto" || ChatPath == "/stock":
-						replyText = common.ConvertPrice(ChatPath[1:], Text)
-					case ChatPath == "/delete":
-						if common.ValidateUniqAsset(ChatID, Text) == false {
-							common.DeleteDBRecord(ChatID, Text)
-							replyText = "Asset successfully deleted"
+				case ChatPath == "/crypto" || ChatPath == "/stock":
+					replyText = common.ConvertPrice(ChatPath[1:], Text)
+				case ChatPath == "/delete":
+					if common.ValidateUniqAsset(ChatID, Text) == false {
+						common.DeleteDBRecord(ChatID, Text)
+						replyText = "Asset successfully deleted"
+					} else {
+						replyText = "You are not tracking " + Text
+					}
+				// Watch conversation path
+				case ChatPath == "/watch":
+					switch ChatStage {
+					case 0:
+						if Text == "crypto" || Text == "stock" {
+							userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 1})
+							savedAssets = append(savedAssets, types.SavedAsset{UserID: ChatID, AssetType: Text})
+							replyText = "Provide asset name"
 						} else {
-							replyText = "You are not tracking " + Text
+							replyText = "Unknown asset type, please write crypto/stock or use buttons"
 						}
-					// Watch conversation path
-					case ChatPath == "/watch": 
-						switch(ChatStage) {
-							case 0:
-								if Text == "crypto" || Text == "stock" {
-									userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 1})
-									savedAssets = append(savedAssets, types.SavedAsset{UserID: ChatID, AssetType: Text})
-									replyText = "Provide asset name"
-								} else {
-									replyText = "Unknown asset type, please write crypto/stock or use buttons"
-								}
-							case 1:
-								replyText, validationBool = common.UpdateAssetNPrice(&savedAssets, ChatID, Text)
-								if validationBool == true {
-									userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 2})
-								}
-							case 2:
-								// Avoid really big numbers 
-								if len(Text) > 20 {
-									replyText = "The target price provided is too long, try again"
-								} else {
-									replyText = common.AssetTrargetPrice(&savedAssets, ChatID, Text)
-								}
+					case 1:
+						replyText, validationBool = common.UpdateAssetNPrice(&savedAssets, ChatID, Text)
+						if validationBool == true {
+							userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 2})
 						}
+					case 2:
+						// Avoid really big numbers
+						if len(Text) > 20 {
+							replyText = "The target price provided is too long, try again"
+						} else {
+							replyText = common.AssetTrargetPrice(&savedAssets, ChatID, Text)
+						}
+					}
 				}
 			} else {
-				switch (Text) {
-					case "/start":
-						replyText = "Welcome :)"
-					case "/crypto":
-						userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
-						replyText = "Provide coin name"
-					case "/stock":
-						userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
-						replyText = "Provide stock name"
-					case "/watch":
-						userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
-						replyText = "Provide asset type (stock/crypto)"
-						usedKeyboard = common.CompileTypeKeyboard()
-					case "/delete":
-						userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
-						replyText = "Provide asset name"
-					case "/wipedb":
-						if ChatID == 88770025 {
-							common.WipeDB()
-							replyText = "DB wiped"
-						}
-					case "/assets":
-						replyText = common.CompileUserAssets(common.GetAssets(ChatID))
-					case "info":
-						replyText = "Info :)"
-					default:
-						replyText = "Command not recognized or the input was too long"
+				switch Text {
+				case "/start":
+					replyText = "Welcome :)"
+				case "/crypto":
+					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					replyText = "Provide coin name"
+				case "/stock":
+					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					replyText = "Provide stock name"
+				case "/watch":
+					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					replyText = "Provide asset type (stock/crypto)"
+					usedKeyboard = common.CompileTypeKeyboard()
+				case "/delete":
+					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					replyText = "Provide asset name"
+				case "/wipedb":
+					if ChatID == 88770025 {
+						common.WipeDB()
+						replyText = "DB wiped"
+					}
+				case "/assets":
+					replyText = common.CompileUserAssets(common.GetAssets(ChatID))
+				case "info":
+					replyText = "Info :)"
+				default:
+					replyText = "Command not recognized or the input was too long"
 
 				}
 			}
 
-			fmt.Println(userChats) // debug
+			fmt.Println(userChats)   // debug
 			fmt.Println(savedAssets) // debug
-			
+
 			msg := tgbotapi.NewMessage(ChatID, replyText)
 			msg.ReplyMarkup = usedKeyboard
 			bot.Send(msg)
