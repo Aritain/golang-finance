@@ -53,7 +53,7 @@ func main() {
 	var err error
 	for _, env := range ValidateEnvs() {
 		_, status := os.LookupEnv(env)
-		if status == false {
+		if !status {
 			log.Printf("%s env is missing.", env)
 			os.Exit(1)
 		}
@@ -78,7 +78,8 @@ func main() {
 	// Create chan for telegram updates
 	var ucfg tgbotapi.UpdateConfig = tgbotapi.NewUpdate(0)
 	ucfg.Timeout = 60
-	updates, err := bot.GetUpdatesChan(ucfg)
+	updates, _ := bot.GetUpdatesChan(ucfg)
+
 	go AssetWatcher(bot)
 
 	for update := range updates {
@@ -107,7 +108,7 @@ func main() {
 				case ChatPath == "/crypto" || ChatPath == "/stock":
 					replyText = common.ConvertPrice(ChatPath[1:], Text)
 				case ChatPath == "/delete":
-					if common.ValidateUniqAsset(ChatID, Text) == false {
+					if !common.ValidateUniqAsset(ChatID, Text) {
 						common.DeleteDBRecord(ChatID, Text)
 						replyText = "Asset successfully deleted"
 					} else {
@@ -126,7 +127,7 @@ func main() {
 						}
 					case 1:
 						replyText, validationBool = common.UpdateAssetNPrice(&savedAssets, ChatID, Text)
-						if validationBool == true {
+						if validationBool {
 							userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: ChatPath, ChatStage: 2})
 						}
 					case 2:
