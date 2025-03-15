@@ -118,7 +118,7 @@ func main() {
 					switch ChatStage {
 					case 0:
 						if Text == "crypto" || Text == "stock" {
-							userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 1})
+							userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: ChatPath, ChatStage: 1})
 							savedAssets = append(savedAssets, types.SavedAsset{UserID: ChatID, AssetType: Text})
 							replyText = "Provide asset name"
 						} else {
@@ -127,7 +127,7 @@ func main() {
 					case 1:
 						replyText, validationBool = common.UpdateAssetNPrice(&savedAssets, ChatID, Text)
 						if validationBool == true {
-							userChats = append(userChats, types.SavedChat{ChatID, ChatPath, 2})
+							userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: ChatPath, ChatStage: 2})
 						}
 					case 2:
 						// Avoid really big numbers
@@ -143,17 +143,17 @@ func main() {
 				case "/start":
 					replyText = "Welcome :)"
 				case "/crypto":
-					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: Text, ChatStage: 0})
 					replyText = "Provide coin name"
 				case "/stock":
-					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: Text, ChatStage: 0})
 					replyText = "Provide stock name"
 				case "/watch":
-					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: Text, ChatStage: 0})
 					replyText = "Provide asset type (stock/crypto)"
 					usedKeyboard = common.CompileTypeKeyboard()
 				case "/delete":
-					userChats = append(userChats, types.SavedChat{ChatID, Text, 0})
+					userChats = append(userChats, types.SavedChat{UserID: ChatID, ChatPath: Text, ChatStage: 0})
 					replyText = "Provide asset name"
 				case "/wipedb":
 					if ChatID == 88770025 {
